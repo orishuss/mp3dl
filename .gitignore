@@ -1,0 +1,8 @@
+# Ignore output folder.
+output/
+
+# Ignore python compiled files.
+*.pyc
+
+# Ignore to-dl (user specific) file.
+to-dl.txt
