@@ -15,14 +15,15 @@ def download_song(song):
 	logging.info("Downloading Song {}".format(song))
 	
 	# Open subprocess that downloads song.
-	download = subprocess.Popen([constants.DOWNLOADER,
+	download = subprocess.Popen(["python " + constants.DOWNLOADER,
 								"--default-search", constants.SEARCH_ENGINE,
 								"--extract-audio", "--audio-format", constants.AUDIO_FORMAT,
+								"--ffmpeg-location", "C:\\",
 								"--output", config.OUTPUT_FOLDER + song + ".%(ext)s",
 								song,
 								"--quiet"],
 								shell=True)
-						
+					
 	return download
 
 def download_song_list(song_list):
@@ -84,10 +85,26 @@ def open_output_folder():
 	# Open file explorer at the output folder.
 	explorer = subprocess.Popen([config.EXPLORER,
 								os.path.abspath(config.OUTPUT_FOLDER)])
+								
+def validate_dependencies():
+	"""
+	Validates that all dependencies exist.
+	Returns whether they exist or not.
+	"""
+	if not os.path.isfile(constants.DOWNLOADER):
+		logging.error(	constants.DOWNLOADER + " Doesn't exist.\n" +
+						"\trun 'git submodule update --init --recursive' to download.")
+		return False
+		
+	return True
 
 def main():
 	# Set logging to debug mode.
 	logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+	
+	# Validate that dependencies exist.
+	if validate_dependencies() is False:
+		return 1
 	
 	# Switch to script's directory.
 	script_path = os.path.abspath(__file__)
