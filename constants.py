@@ -1,3 +1,5 @@
+import platform
+
 # Output audio format.
 AUDIO_FORMAT = "mp3"
 
@@ -16,3 +18,11 @@ BATCH_FILE_COMMENT_CHARACTER = "#"
 
 # Maximum downloads simultaneously
 MAXIMUM_SIMULTANEOUS_DOWNLOADS = 3
+
+# Video to Audio converter.
+VIDEO_TO_AUDIO_CONVERTER = ["ffmpeg", "ffprobe"]
+
+VIDEO_TO_AUDIO_CONVERTER_DOWNLOAD_URL = "http://ffmpeg.org/download.html"
+
+# The system's 'which' command to find executables in path.
+SYSTEM_WHICH_COMMAND = "where" if platform.system() == "Windows" else "which"

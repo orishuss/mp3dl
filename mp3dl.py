@@ -3,6 +3,7 @@ import os
 import logging
 import shutil
 import time
+import webbrowser
 
 import config
 import constants
@@ -18,7 +19,6 @@ def download_song(song):
     download = subprocess.Popen(["python " + constants.DOWNLOADER,
                                 "--default-search", constants.SEARCH_ENGINE,
                                 "--extract-audio", "--audio-format", constants.AUDIO_FORMAT,
-                                "--ffmpeg-location", "C:\\",
                                 "--output", config.OUTPUT_FOLDER + song + ".%(ext)s",
                                 song,
                                 "--quiet"],
@@ -91,9 +91,29 @@ def validate_dependencies():
     Validates that all dependencies exist.
     Returns whether they exist or not.
     """
+    # Check that downloader script exists.
     if not os.path.isfile(constants.DOWNLOADER):
-        logging.error(	constants.DOWNLOADER + " Doesn't exist.\n" +
+        logging.error(	"\t" + constants.DOWNLOADER + " Doesn't exist.\n" +
                         "\trun 'git submodule update --init --recursive' to download.")
+        return False
+    
+    # Check if all video to audio converter dependencies exist.
+    where_cmds = [subprocess.Popen(
+        [constants.SYSTEM_WHICH_COMMAND, 
+        bin],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True) for bin in constants.VIDEO_TO_AUDIO_CONVERTER]
+    # Check whether any of the binaries don't exists
+    video_to_audio_converter_exists = not any([p.wait() for p in where_cmds])
+    
+    if False == video_to_audio_converter_exists:
+        logging.error(	"\tOne or more of the following don't exist:\n" +
+                        "\t-\t" +
+                        '\n\t-\t'.join(constants.VIDEO_TO_AUDIO_CONVERTER) +
+                        "\n\tDownload the package from " + constants.VIDEO_TO_AUDIO_CONVERTER_DOWNLOAD_URL +
+                        "\n\tAnd insert it to your system's path.")
+        webbrowser.open(constants.VIDEO_TO_AUDIO_CONVERTER_DOWNLOAD_URL)
         return False
 
     return True
