@@ -12,18 +12,21 @@ def download_song(song):
     """
     Download the given song.
     Returns the download process for the song.
-    """
-    logging.info("Downloading Song {}".format(song))
+    """ 
+    logging.info("Downloading Song \'{}\'".format(song))
 
+    output_file = os.path.join(*[config.OUTPUT_FOLDER, song + ".%(ext)s"])
+    
     # Open subprocess that downloads song.
-    download = subprocess.Popen(["python " + constants.DOWNLOADER,
+    download = subprocess.Popen(["python", os.path.join(*constants.DOWNLOADER),
                                 "--default-search", constants.SEARCH_ENGINE,
                                 "--extract-audio", "--audio-format", constants.AUDIO_FORMAT,
-                                "--output", config.OUTPUT_FOLDER + song + ".%(ext)s",
+                                "--output", os.path.join(*[config.OUTPUT_FOLDER, song + ".%(ext)s"]),
+                                "--embed-thumbnail",
                                 song,
                                 "--quiet"],
-                                shell=True)
-                    
+                                shell=False)
+
     return download
 
 def download_song_list(song_list):
@@ -92,8 +95,8 @@ def validate_dependencies():
     Returns whether they exist or not.
     """
     # Check that downloader script exists.
-    if not os.path.isfile(constants.DOWNLOADER):
-        logging.error(	"\t" + constants.DOWNLOADER + " Doesn't exist.\n" +
+    if not os.path.isfile(os.path.join(*constants.DOWNLOADER)):
+        logging.error(	"\t" + os.path.join(*constants.DOWNLOADER) + " Doesn't exist.\n" +
                         "\trun 'git submodule update --init --recursive' to download.")
         return False
     
@@ -122,14 +125,14 @@ def main():
     # Set logging to debug mode.
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
     
-    # Validate that dependencies exist.
-    if validate_dependencies() is False:
-        return 1
-
     # Switch to script's directory.
     script_path = os.path.abspath(__file__)
     script_dir = os.path.dirname(script_path)
     os.chdir(script_dir)
+    
+    # Validate that dependencies exist.
+    if validate_dependencies() is False:
+        return 1
 
     # Allow the user to edit the batch file.
     edit_batch_file()

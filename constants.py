@@ -4,7 +4,7 @@ import platform
 AUDIO_FORMAT = "mp3"
 
 # Executable to download with.
-DOWNLOADER = "third_party/youtube-dl/youtube_dl/__main__.py"
+DOWNLOADER = ["third_party", "youtube-dl", "youtube_dl", "__main__.py"]
 
 # Search Engine to look up song names' at.
 SEARCH_ENGINE = "ytsearch" # youtube.
