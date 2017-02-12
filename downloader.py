@@ -38,14 +38,12 @@ class Downloader(object):
         Returns the download process for the song.
         """ 
         logging.info("Downloading Song \'{}\'".format(song))
-
-        output_file = os.path.join(*[config.OUTPUT_FOLDER, song + ".%(ext)s"])
-
+        
         # Open subprocess that downloads song.
         download = subprocess.Popen(["python", os.path.join(*self.DOWNLOADER),
                                     "--default-search", self.SEARCH_ENGINE,
                                     "--extract-audio", "--audio-format", self.AUDIO_FORMAT,
-                                    "--output", os.path.join(*[config.OUTPUT_FOLDER, song + ".%(ext)s"]),
+                                    "--output", os.path.join(*[config.OUTPUT_FOLDER, "%(title)s.%(ext)s"]),
                                     "--embed-thumbnail",
                                     song,
                                     "--quiet"],
