@@ -1,59 +1,14 @@
+#!/usr/bin/python
+
 import subprocess
 import os
 import logging
 import shutil
-import time
 import webbrowser
 
 import config
 import constants
-
-def download_song(song):
-    """
-    Download the given song.
-    Returns the download process for the song.
-    """ 
-    logging.info("Downloading Song \'{}\'".format(song))
-
-    output_file = os.path.join(*[config.OUTPUT_FOLDER, song + ".%(ext)s"])
-    
-    # Open subprocess that downloads song.
-    download = subprocess.Popen(["python", os.path.join(*constants.DOWNLOADER),
-                                "--default-search", constants.SEARCH_ENGINE,
-                                "--extract-audio", "--audio-format", constants.AUDIO_FORMAT,
-                                "--output", os.path.join(*[config.OUTPUT_FOLDER, song + ".%(ext)s"]),
-                                "--embed-thumbnail",
-                                song,
-                                "--quiet"],
-                                shell=False)
-
-    return download
-
-def download_song_list(song_list):
-    """
-    Download a list of songs.
-    """
-    simulatenous_downloads = 0
-    downloads = []
-    # Download songs.
-    while  (song_list): # not empty
-        # Download a song if haven't reached the maximum simultaneous downloads.
-        if (constants.MAXIMUM_SIMULTANEOUS_DOWNLOADS > simulatenous_downloads):
-            downloads.append(download_song(song_list.pop(0)))
-            simulatenous_downloads += 1
-
-        # Poll which songs are finished.
-        polls = [p.poll() for p in downloads]
-
-        # Determine which songs have finished downloading.
-        finished_downloads = [downloads.pop(i) for i in range(len(polls))[::-1] if polls[i] is not None]
-        simulatenous_downloads -= len(finished_downloads)
-
-        # Sleep for a bit, don't kill CPU.
-        time.sleep(1)
-
-    # Wait for last songs to finish
-    [p.wait() for p in downloads]
+from downloader import Downloader
 
 def edit_batch_file():
     """
@@ -88,38 +43,6 @@ def open_output_folder():
     # Open file explorer at the output folder.
     webbrowser.open(os.path.abspath(config.OUTPUT_FOLDER))
                                 
-def validate_dependencies():
-    """
-    Validates that all dependencies exist.
-    Returns whether they exist or not.
-    """
-    # Check that downloader script exists.
-    if not os.path.isfile(os.path.join(*constants.DOWNLOADER)):
-        logging.error(	"\t" + os.path.join(*constants.DOWNLOADER) + " Doesn't exist.\n" +
-                        "\trun 'git submodule update --init --recursive' to download.")
-        return False
-    
-    # Check if all video to audio converter dependencies exist.
-    where_cmds = [subprocess.Popen(
-        [constants.SYSTEM_WHICH_COMMAND, 
-        bin],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=True) for bin in constants.VIDEO_TO_AUDIO_CONVERTER]
-    # Check whether any of the binaries don't exists
-    video_to_audio_converter_exists = not any([p.wait() for p in where_cmds])
-    
-    if False == video_to_audio_converter_exists:
-        logging.error(	"\tOne or more of the following don't exist:\n" +
-                        "\t-\t" +
-                        '\n\t-\t'.join(constants.VIDEO_TO_AUDIO_CONVERTER) +
-                        "\n\tDownload the package from " + constants.VIDEO_TO_AUDIO_CONVERTER_DOWNLOAD_URL +
-                        "\n\tAnd insert it to your system's path.")
-        webbrowser.open(constants.VIDEO_TO_AUDIO_CONVERTER_DOWNLOAD_URL)
-        return False
-
-    return True
-
 def main():
     # Set logging to debug mode.
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
@@ -129,8 +52,11 @@ def main():
     script_dir = os.path.dirname(script_path)
     os.chdir(script_dir)
     
+    # Initiate downloader.
+    downloader = Downloader()
+    
     # Validate that dependencies exist.
-    if validate_dependencies() is False:
+    if downloader.validate_dependencies() is False:
         return 1
 
     # Allow the user to edit the batch file.
@@ -141,7 +67,7 @@ def main():
         songs = [x.strip() for x in f.readlines() if is_valid_song_name(x)]
 
     # Download all songs
-    download_song_list(songs)
+    downloader.download_song_list(songs)
 
     # Open output folder.
     open_output_folder()
