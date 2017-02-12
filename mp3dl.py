@@ -63,7 +63,7 @@ def edit_batch_file():
     shutil.copyfile(constants.BATCH_FILE_TEMPLATE, constants.BATCH_FILE)
 
     # Open the batch file for editing.
-    edit_proc = subprocess.Popen(	[config.EDITOR,
+    edit_proc = subprocess.Popen(	[constants.EDITOR,
                                     constants.BATCH_FILE])
 
     # Wait for user to finish editing the file.
@@ -86,8 +86,7 @@ def open_output_folder():
     Open the output folder.
     """
     # Open file explorer at the output folder.
-    explorer = subprocess.Popen([config.EXPLORER,
-                                os.path.abspath(config.OUTPUT_FOLDER)])
+    webbrowser.open(os.path.abspath(config.OUTPUT_FOLDER))
                                 
 def validate_dependencies():
     """

@@ -1,4 +1,7 @@
 import platform
+import os
+
+OPERATING_SYSTEM = platform.system()
 
 # Output audio format.
 AUDIO_FORMAT = "mp3"
@@ -25,4 +28,7 @@ VIDEO_TO_AUDIO_CONVERTER = ["ffmpeg", "ffprobe"]
 VIDEO_TO_AUDIO_CONVERTER_DOWNLOAD_URL = "http://ffmpeg.org/download.html"
 
 # The system's 'which' command to find executables in path.
-SYSTEM_WHICH_COMMAND = "where" if platform.system() == "Windows" else "which"
+SYSTEM_WHICH_COMMAND = "where" if OPERATING_SYSTEM == "Windows" else "which"
+
+# The system's editor
+EDITOR = "notepad" if OPERATING_SYSTEM == "Windows" else os.getenv('EDITOR')
