@@ -8,7 +8,7 @@ import time
 import constants
 import config
 
-class Downloader:
+class Downloader(object):
     """
     Provides an API that downloads songs from YouTube,
     using the library youtube-dl.
@@ -31,7 +31,7 @@ class Downloader:
 
     def __init__(self):
         pass
-    
+
     def download_song(self, song):
         """
         Download the given song.
@@ -40,7 +40,7 @@ class Downloader:
         logging.info("Downloading Song \'{}\'".format(song))
 
         output_file = os.path.join(*[config.OUTPUT_FOLDER, song + ".%(ext)s"])
-        
+
         # Open subprocess that downloads song.
         download = subprocess.Popen(["python", os.path.join(*self.DOWNLOADER),
                                     "--default-search", self.SEARCH_ENGINE,
