@@ -1,9 +1,13 @@
 #!/usr/bin/python
 
+from __future__ import unicode_literals # For youtube-dl
 import logging
 import os
 import subprocess
 import time
+import threading
+import importlib
+import sys
 
 import constants
 import config
@@ -17,7 +21,7 @@ class Downloader(object):
     AUDIO_FORMAT = "mp3"
 
     # Executable to download with.
-    DOWNLOADER = ["third_party", "youtube-dl", "youtube_dl", "__main__.py"]
+    DOWNLOADER = ["third_party", "youtube-dl", "youtube_dl"]
 
     # Search Engine to look up song names' at.
     SEARCH_ENGINE = "ytsearch" # youtube.
@@ -30,26 +34,33 @@ class Downloader(object):
     VIDEO_TO_AUDIO_CONVERTER_DOWNLOAD_URL = "http://ffmpeg.org/download.html"
 
     def __init__(self):
-        pass
+        # Import downloader file.
+        sys.path.append(os.path.join(*self.DOWNLOADER[:-1]))
+        self.downloader_module = importlib.import_module(self.DOWNLOADER[-1])
 
     def download_song(self, song):
         """
         Download the given song.
-        Returns the download process for the song.
         """ 
         logging.info("Downloading Song \'{}\'".format(song))
         
-        # Open subprocess that downloads song.
-        download = subprocess.Popen(["python", os.path.join(*self.DOWNLOADER),
-                                    "--default-search", self.SEARCH_ENGINE,
-                                    "--extract-audio", "--audio-format", self.AUDIO_FORMAT,
-                                    "--output", os.path.join(*[config.OUTPUT_FOLDER, "%(title)s.%(ext)s"]),
-                                    "--embed-thumbnail",
-                                    song,
-                                    "--quiet"],
-                                    shell=False)
-
-        return download
+        # Youtube-DL Options may be found in the packagkes YoutubeDL.py file.
+        ydl_opts = {
+            "writethumbnail": True,
+            "default_search": self.SEARCH_ENGINE,
+            "postprocessors": [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3'
+                },
+                {
+                'key': 'EmbedThumbnail'
+                }],
+            "outtmpl": os.path.join(*[config.OUTPUT_FOLDER, "%(title)s.%(ext)s"]),
+            "quiet": True
+            }
+        # Download the song.
+        with self.downloader_module.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([song])
 
     def download_song_list(self, song_list):
         """
@@ -61,21 +72,23 @@ class Downloader(object):
         while  (song_list): # not empty
             # Download a song if haven't reached the maximum simultaneous downloads.
             if (self.MAXIMUM_SIMULTANEOUS_DOWNLOADS > simulatenous_downloads):
-                downloads.append(self.download_song(song_list.pop(0)))
+                download = threading.Thread(target=self.download_song, args=([song_list.pop(0)]))
+                downloads.append(download)
+                download.start()
                 simulatenous_downloads += 1
 
             # Poll which songs are finished.
-            polls = [p.poll() for p in downloads]
+            polls = [p.is_alive() for p in downloads]
 
             # Determine which songs have finished downloading.
-            finished_downloads = [downloads.pop(i) for i in range(len(polls))[::-1] if polls[i] is not None]
+            finished_downloads = [downloads.pop(i) for i in range(len(polls))[::-1] if polls[i] is False]
             simulatenous_downloads -= len(finished_downloads)
 
             # Sleep for a bit, don't kill CPU.
             time.sleep(1)
 
         # Wait for last songs to finish
-        [p.wait() for p in downloads]
+        [p.join() for p in downloads]
 
     def validate_dependencies(self):
         """
@@ -83,7 +96,7 @@ class Downloader(object):
         Returns whether they exist or not.
         """
         # Check that downloader script exists.
-        if not os.path.isfile(os.path.join(*self.DOWNLOADER)):
+        if not os.path.exists(os.path.join(*self.DOWNLOADER)):
             logging.error(	"\t" + os.path.join(*self.DOWNLOADER) + " Doesn't exist.\n" +
                             "\trun 'git submodule update --init --recursive' to download.")
             return False
