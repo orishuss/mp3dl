@@ -8,6 +8,7 @@ import time
 import threading
 import importlib
 import sys
+import webbrowser
 
 import constants
 import config
@@ -37,6 +38,10 @@ class Downloader(object):
         # Import downloader file.
         sys.path.append(os.path.join(*self.DOWNLOADER[:-1]))
         self.downloader_module = importlib.import_module(self.DOWNLOADER[-1])
+
+        # Create the output directory if doesn't exist.
+        if not os.path.exists(config.OUTPUT_FOLDER):
+            os.mkdir(config.OUTPUT_FOLDER)
 
     def download_song(self, song):
         """
@@ -106,13 +111,12 @@ class Downloader(object):
             [constants.SYSTEM_WHICH_COMMAND, 
             bin],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True) for bin in self.VIDEO_TO_AUDIO_CONVERTER]
+            stderr=subprocess.PIPE) for bin in self.VIDEO_TO_AUDIO_CONVERTER]
         # Check whether any of the binaries don't exists
         video_to_audio_converter_exists = not any([p.wait() for p in where_cmds])
         
         if False == video_to_audio_converter_exists:
-            logging.error(	"\tOne or more of the following don't exist:\n" +
+            logging.error(	"\tOne of the following must exist:\n" +
                             "\t-\t" +
                             '\n\t-\t'.join(self.VIDEO_TO_AUDIO_CONVERTER) +
                             "\n\tDownload the package from " + self.VIDEO_TO_AUDIO_CONVERTER_DOWNLOAD_URL +

@@ -19,6 +19,7 @@ def open_output_folder():
 def main():
     # Set logging to debug mode.
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
     
     # Switch to script's directory.
     script_path = os.path.abspath(__file__)
@@ -30,14 +31,18 @@ def main():
     batcher = Batcher()
     
     # Validate that dependencies exist.
+    logging.info("Validating dependencies...")
     if downloader.validate_dependencies() is False:
+        logging.error("Failed to validate downloader's dependencies.")
         return 1
 
     # Allow the user to edit the batch file, then read it.
     batcher.edit_batch_file()
+    logging.info("Reading user-entered songs to download.")
     songs = batcher.read_batch_file()
 
     # Download all songs
+    logging.info("Downloading user-entered songs.")
     downloader.download_song_list(songs)
 
     # Open output folder.

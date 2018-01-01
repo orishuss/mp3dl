@@ -2,6 +2,7 @@
 
 import subprocess
 import os
+import logging
 
 import constants
 
@@ -49,6 +50,7 @@ class Batcher(object):
             f.truncate()
 
         # Open the batch file for editing.
+        logging.info("Opening batch file with " + str(self.EDITOR) + ".")
         edit_proc = subprocess.Popen(   [self.EDITOR,
                                         self.BATCH_FILE])
 
